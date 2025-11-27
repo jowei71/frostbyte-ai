@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostByte AI • Zero Food Waste</title>
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="AI-powered food scanning to eliminate food waste. Scan your fridge and save money!">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/manifest+json,{
+      \"name\": \"FrostByte AI\",
+      \"short_name\": \"FrostByte\",
+      \"start_url\": \".\",
+      \"display\": \"standalone\",
+      \"background_color\": \"#0f172a\",
+      \"theme_color\": \"#0f172a\",
+      \"icons\": [
+        {
+          \"src\": \"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B7%3C%2Ftext%3E%3C%2Fsvg%3E\",
+          \"sizes\": \"512x512\",
+          \"type\": \"image/svg+xml\"
+        }
+      ]
+    }">
+    
+    <!-- Styles & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .scanner-line {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: #22d3ee;
+            box-shadow: 0 0 20px #22d3ee;
+            animation: scan 3s infinite linear;
+        }
+        
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            40% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-press {
+            transition: all 0.2s ease;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-press:active {
+            transform: scale(0.95);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+        
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 5px rgba(34, 211, 238, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(34, 211, 238, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(34, 211, 238, 0.5); }
+        }
+        
+        .loading-dots:after {
+            content: '';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .ai-pulse {
+            animation: aiPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes aiPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        #preview-canvas {
+            border-radius: 20px;
+            max-width: 100%;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .mobile-text-lg {
+                font-size: 1.125rem;
+            }
+            
+            .mobile-py-3 {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+            
+            .mobile-px-4 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+
+        /* Prevent zoom on input focus for iOS */
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-8">
+    <!-- Navigation -->
+    <nav class="glass fixed top-0 w-full z-50 px-4 py-3 flex justify-between items-center border-b border-white/10">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-snowflake text-white text-sm"></i>
+            </div>
+            <h1 class="text-lg font-bold">FrostByte<span class="text-cyan-400">.ai</span></h1>
+        </div>
+        <div class="text-xs bg-emerald-500/20 border border-emerald-500/40 px-2 py-1 rounded-full text-emerald-400 flex items-center gap-2">
+            <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-glow"></div>
+            AI ACTIVE
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-16 px-4 max-w-4xl mx-auto">
+        <!-- Stats Cards -->
+        <div class="stats-grid mb-6">
+            <div class="glass rounded-2xl p-4 relative overflow-hidden fade-in">
+                <div class="absolute -right-6 -top-6 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl"></div>
+                <div class="text-xs text-slate-400 mb-1">Health Score</div>
+                <div class="text-3xl font-bold text-emerald-400" id="health-score">--</div>
+                <div class="w-full bg-slate-700/50 h-2 mt-2 rounded-full overflow-hidden">
+                    <div id="health-bar" class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 w-0 transition-all duration-1000 ease-out"></div>
+                </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-4 relative overflow-hidden fade-in">
+                <div class="absolute -right-6 -top-6 w-20 h-20 bg-amber-500/10 rounded-full blur-xl"></div>
+                <div class="text-xs text-slate-400 mb-1">Monthly Savings</div>
+                <div class="text-3xl font-bold text-amber-400">$<span id="money-saved">0</span></div>
+                <p class="text-xs text-slate-500 mt-1">Zero waste</p>
+            </div>
+        </div>
+
+        <!-- Scanner Section -->
+        <div class="glass rounded-3xl p-1 mb-6 border border-white/10 shadow-xl shadow-black/30 fade-in ai-pulse">
+            <div class="bg-slate-900/80 rounded-[1.5rem] overflow-hidden relative min-h-[350px] flex flex-col items-center justify-center">
+                
+                <!-- Initial State -->
+                <div id="scanner-init" class="text-center p-6 w-full space-y-6">
+                    <div class="w-24 h-24 bg-slate-800/60 rounded-full mx-auto flex items-center justify-center border-4 border-dashed border-cyan-500/40 relative pulse-glow">
+                        <i class="fa-solid fa-camera text-4xl text-cyan-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-2 mobile-text-lg">Scan Your Fridge</h3>
+                        <p class="text-slate-400 text-sm max-w-xs mx-auto">AI-powered food recognition with expiry tracking</p>
+                    </div>
+                    
+                    <div class="space-y-3 w-full max-w-xs mx-auto">
+                        <!-- Modern Camera Button -->
+                        <button id="modern-camera-btn" class="w-full px-4 py-4 bg-gradient-to-r from-cyan-600 to-blue-700 rounded-xl text-white font-semibold text-base btn-press flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-camera"></i>
+                            Take Photo
+                        </button>
+                        
+                        <button id="upload-btn" class="w-full px-4 py-4 bg-slate-700 hover:bg-slate-600 rounded-xl text-white font-semibold text-base btn-press flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-images"></i>
+                            Choose from Gallery
+                        </button>
+                        
+                        <button id="demo-btn" class="w-full px-4 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-white font-medium btn-press text-sm">
+                            Try Demo Scan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scanning Overlay -->
+                <div id="scanning-overlay" class="hidden absolute inset-0 bg-black z-20 rounded-[1.5rem]">
+                    <canvas id="preview-canvas" class="w-full h-full object-cover opacity-40"></canvas>
+                    <div class="scanner-line"></div>
+                    
+                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 p-4">
+                        <div class="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-microchip fa-spin text-3xl text-cyan-400"></i>
+                        </div>
+                        
+                        <div class="glass border border-cyan-500/30 px-4 py-3 rounded-2xl max-w-xs">
+                            <p class="text-lg font-bold text-cyan-400 text-center" id="scan-text">Analyzing Food<span class="loading-dots"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hidden file inputs -->
+        <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
+        <input type="file" id="gallery-input" accept="image/*" class="hidden">
+        
+        <!-- Results Section -->
+        <div id="results-section" class="hidden space-y-4 fade-in">
+            <!-- Rescue Button -->
+            <button id="rescue-btn" class="w-full p-1 rounded-2xl bg-gradient-to-r from-orange-600 to-rose-700 shadow-lg card-hover">
+                <div class="glass rounded-[16px] p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-fire text-orange-300"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="text-xs font-bold text-orange-300 uppercase tracking-wider">Expiring Soon</div>
+                            <div class="text-lg font-bold text-white">Rescue Mission</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xl text-white/70"></i>
+                </div>
+            </button>
+            
+            <!-- Filter Buttons -->
+            <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <button class="filter-btn active px-4 py-2.5 rounded-xl bg-cyan-600 border border-cyan-500 text-white text-sm font-semibold whitespace-nowrap min-w-[80px]" data-filter="all">All</button>
+                <button class="filter-btn px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-semibold whitespace-nowrap min-w-[80px]" data-filter="urgent">Critical</button>
+                <button class="filter-btn px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-semibold whitespace-nowrap min-w-[80px]" data-filter="fresh">Fresh</button>
+            </div>
+            
+            <!-- Items Grid -->
+            <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="py-8">
+            <h2 class="text-2xl font-bold text-center mb-6">Why FrostByte Wins</h2>
+            <div class="space-y-3">
+                <div class="glass rounded-2xl p-4 card-hover">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Advanced AI Scanning</h3>
+                            <p class="text-slate-400 text-sm">Real food recognition with expiry prediction</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-4 card-hover">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Instant Analysis</h3>
+                            <p class="text-slate-400 text-sm">Get results in seconds on your phone</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl p-4 card-hover">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Smart Recommendations</h3>
+                            <p class="text-slate-400 text-sm">AI suggests recipes for expiring items</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Recipe Modal -->
+    <div id="recipe-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/60 backdrop-blur-sm">
+        <div class="w-full max-w-2xl bg-slate-900 rounded-t-3xl border-t border-white/10 max-h-[80vh] overflow-hidden">
+            <div class="p-4">
+                <div class="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-4"></div>
+                <div id="recipe-content" class="text-center space-y-4">
+                    <i class="fa-solid fa-microchip fa-spin text-4xl text-cyan-500"></i>
+                    <p class="text-base text-slate-400">Generating rescue recipe<span class="loading-dots"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install Prompt -->
+    <div id="install-prompt" class="fixed bottom-4 left-4 right-4 glass rounded-2xl p-4 hidden items-center justify-between shadow-2xl z-40">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-snowflake text-white text-sm"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-sm">FrostByte AI</div>
+                <div class="text-slate-400 text-xs">Install for quick access</div>
+            </div>
+        </div>
+        <button id="install-btn" class="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-xl text-white font-semibold text-sm">
+            Install
+        </button>
+    </div>
+
+    <script>
+        // App State
+        let inventory = [];
+        let savedMoney = 0;
+        let deferredPrompt = null;
+        
+        // DOM Elements
+        const scannerInit = document.getElementById('scanner-init');
+        const scanningOverlay = document.getElementById('scanning-overlay');
+        const resultsSection = document.getElementById('results-section');
+        const cameraInput = document.getElementById('camera-input');
+        const galleryInput = document.getElementById('gallery-input');
+        const modernCameraBtn = document.getElementById('modern-camera-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const demoBtn = document.getElementById('demo-btn');
+        const itemsGrid = document.getElementById('items-grid');
+        const healthScore = document.getElementById('health-score');
+        const healthBar = document.getElementById('health-bar');
+        const moneySaved = document.getElementById('money-saved');
+        const scanText = document.getElementById('scan-text');
+        const recipeModal = document.getElementById('recipe-modal');
+        const recipeContent = document.getElementById('recipe-content');
+        const rescueBtn = document.getElementById('rescue-btn');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const previewCanvas = document.getElementById('preview-canvas');
+        const installPrompt = document.getElementById('install-prompt');
+        const installBtn = document.getElementById('install-btn');
+        
+        // Demo Data
+        const demoItems = [
+            { name: "Whole Milk", daysLeft: 2, emoji: "🥛", tip: "Check smell before use", category: "dairy" },
+            { name: "Avocado", daysLeft: 1, emoji: "🥑", tip: "Eat today or freeze", category: "produce" },
+            { name: "Salmon Fillet", daysLeft: 1, emoji: "🐟", tip: "Cook immediately", category: "meat" },
+            { name: "Baby Spinach", daysLeft: 3, emoji: "🥬", tip: "Wilting, use in smoothies", category: "produce" },
+            { name: "Greek Yogurt", daysLeft: 14, emoji: "🍶", tip: "Good for weeks", category: "dairy" },
+            { name: "Cheddar Cheese", daysLeft: 21, emoji: "🧀", tip: "Ages gracefully", category: "dairy" }
+        ];
+
+        // Event Listeners
+        modernCameraBtn.addEventListener('click', () => cameraInput.click());
+        uploadBtn.addEventListener('click', () => galleryInput.click());
+        demoBtn.addEventListener('click', loadDemo);
+        
+        // Single handler for both camera and gallery inputs
+        cameraInput.addEventListener('change', handleImageSelection);
+        galleryInput.addEventListener('change', handleImageSelection);
+        
+        rescueBtn.addEventListener('click', showRescueRecipe);
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-cyan-600', 'text-white');
+                    b.classList.add('text-slate-300');
+                });
+                btn.classList.add('active', 'bg-cyan-600', 'text-white');
+                btn.classList.remove('text-slate-300');
+                filterItems(btn.dataset.filter);
+            });
+        });
+
+        // PWA Installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            setTimeout(() => {
+                installPrompt.classList.remove('hidden');
+            }, 5000);
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installPrompt.classList.add('hidden');
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        // Modern Image Handler
+        function handleImageSelection(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Reset inputs
+            cameraInput.value = '';
+            galleryInput.value = '';
+            
+            processImage(file);
+        }
+
+        async function processImage(file) {
+            // Show scanning overlay immediately
+            scanningOverlay.classList.remove('hidden');
+            
+            // Draw image to preview canvas
+            const img = new Image();
+            const ctx = previewCanvas.getContext('2d');
+            
+            img.onload = function() {
+                // Scale canvas for mobile performance
+                const maxWidth = Math.min(800, window.innerWidth);
+                const scale = maxWidth / img.width;
+                previewCanvas.width = maxWidth;
+                previewCanvas.height = img.height * scale;
+                
+                ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
+                
+                startScanningAnimation();
+                
+                // Simulate AI processing
+                setTimeout(() => {
+                    inventory = [...demoItems];
+                    finishProcessing();
+                }, 3000);
+            };
+            
+            img.src = URL.createObjectURL(file);
+        }
+        
+        function finishProcessing() {
+            renderItems();
+            scanningOverlay.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+            
+            // Smooth scroll to results
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+            
+            confetti({
+                particleCount: 80,
+                spread: 50,
+                origin: { y: 0.6 }
+            });
+        }
+        
+        function startScanningAnimation() {
+            const messages = [
+                "Scanning food items...",
+                "Identifying products...",
+                "Checking expiry dates...",
+                "Analyzing freshness...",
+                "Building inventory..."
+            ];
+            
+            let i = 0;
+            const interval = setInterval(() => {
+                scanText.innerHTML = `Analyzing Food<span class="loading-dots"></span>`;
+                setTimeout(() => {
+                    scanText.innerHTML = `${messages[i]}<span class="loading-dots"></span>`;
+                    i = (i + 1) % messages.length;
+                }, 100);
+            }, 800);
+            
+            // Clear interval when processing finishes
+            setTimeout(() => clearInterval(interval), 3000);
+        }
+        
+        function loadDemo() {
+            // Show loading state on demo button
+            const originalText = demoBtn.innerHTML;
+            demoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...';
+            demoBtn.disabled = true;
+            
+            // Simulate AI processing
+            scanningOverlay.classList.remove('hidden');
+            startScanningAnimation();
+            
+            setTimeout(() => {
+                inventory = [...demoItems];
+                renderItems();
+                scanningOverlay.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+                
+                // Reset button
+                demoBtn.innerHTML = originalText;
+                demoBtn.disabled = false;
+                
+                // Smooth scroll to results
+                setTimeout(() => {
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+                
+                confetti({
+                    particleCount: 60,
+                    spread: 40,
+                    origin: { y: 0.6 }
+                });
+            }, 3000);
+        }
+        
+        function renderItems() {
+            let totalScore = 0;
+            itemsGrid.innerHTML = '';
+            
+            if (inventory.length === 0) {
+                itemsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fa-solid fa-face-frown text-4xl text-slate-600 mb-3"></i>
+                        <p class="text-slate-400 text-sm">No items detected. Try another photo.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            inventory.forEach((item, index) => {
+                let status, bgColor, textColor, badgeColor;
+                
+                if (item.daysLeft <= 2) {
+                    status = 'Critical';
+                    bgColor = 'from-red-500/10 to-rose-600/10';
+                    textColor = 'text-red-400';
+                    badgeColor = 'bg-red-500';
+                    totalScore += 10;
+                } else if (item.daysLeft <= 5) {
+                    status = 'Warning';
+                    bgColor = 'from-amber-500/10 to-orange-600/10';
+                    textColor = 'text-amber-400';
+                    badgeColor = 'bg-amber-500';
+                    totalScore += 50;
+                } else {
+                    status = 'Fresh';
+                    bgColor = 'from-emerald-500/10 to-cyan-600/10';
+                    textColor = 'text-emerald-400';
+                    badgeColor = 'bg-emerald-500';
+                    totalScore += 100;
+                }
+                
+                const itemCard = document.createElement('div');
+                itemCard.className = `glass rounded-2xl p-4 bg-gradient-to-br ${bgColor} border border-white/5 card-hover fade-in`;
+                itemCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-3xl">${item.emoji}</span>
+                        <span class="text-xs font-bold px-2 py-1 rounded-full ${badgeColor} text-white">${item.daysLeft} DAYS</span>
+                    </div>
+                    <h3 class="font-semibold mb-1 ${textColor} text-sm">${item.name}</h3>
+                    <p class="text-xs text-slate-400 mb-4">${item.tip}</p>
+                    <button class="eat-btn w-full py-2.5 bg-white/10 hover:bg-white/20 rounded-xl font-medium text-xs transition btn-press" data-index="${index}">
+                        Mark As Eaten
+                    </button>
+                `;
+                
+                itemsGrid.appendChild(itemCard);
+            });
+            
+            document.querySelectorAll('.eat-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    markAsEaten(index);
+                });
+            });
+            
+            const avgScore = Math.round(totalScore / (inventory.length || 1));
+            healthScore.textContent = avgScore;
+            healthBar.style.width = `${avgScore}%`;
+            
+            if (avgScore < 40) {
+                healthScore.className = 'text-3xl font-bold text-red-400';
+                healthBar.className = 'h-full bg-gradient-to-r from-red-500 to-rose-500 w-0 transition-all duration-1000 ease-out';
+            } else if (avgScore < 75) {
+                healthScore.className = 'text-3xl font-bold text-amber-400';
+                healthBar.className = 'h-full bg-gradient-to-r from-amber-500 to-orange-500 w-0 transition-all duration-1000 ease-out';
+            } else {
+                healthScore.className = 'text-3xl font-bold text-emerald-400';
+                healthBar.className = 'h-full bg-gradient-to-r from-emerald-500 to-cyan-500 w-0 transition-all duration-1000 ease-out';
+            }
+        }
+        
+        function markAsEaten(index) {
+            savedMoney += 3.5;
+            moneySaved.textContent = Math.round(savedMoney);
+            inventory.splice(index, 1);
+            renderItems();
+            
+            // Mobile-optimized confetti
+            confetti({
+                particleCount: 30,
+                spread: 40,
+                origin: { y: 0.7 }
+            });
+        }
+        
+        function filterItems(filter) {
+            const items = document.querySelectorAll('#items-grid > div');
+            
+            items.forEach((item, index) => {
+                if (index >= inventory.length) return;
+                
+                const itemData = inventory[index];
+                let show = false;
+                
+                if (filter === 'all') show = true;
+                else if (filter === 'urgent') show = itemData.daysLeft <= 2;
+                else if (filter === 'fresh') show = itemData.daysLeft > 5;
+                
+                item.style.display = show ? 'block' : 'none';
+            });
+        }
+        
+        async function showRescueRecipe() {
+            recipeModal.classList.remove('hidden');
+            
+            const urgentItems = inventory.filter(item => item.daysLeft <= 3);
+            
+            // Simulate AI recipe generation
+            setTimeout(() => {
+                let recipeHTML;
+                
+                if (urgentItems.length > 0) {
+                    const itemNames = urgentItems.map(item => item.name).join(', ');
+                    const recipes = [
+                        {
+                            name: "Quick Stir Fry",
+                            ingredients: `${itemNames}, garlic, soy sauce, oil`,
+                            instructions: "1. Chop all ingredients\n2. Heat oil in pan\n3. Stir-fry with soy sauce\n4. Serve with rice",
+                            tip: "Cook on high heat for best texture"
+                        },
+                        {
+                            name: "Fridge Cleanout Omelette",
+                            ingredients: `${itemNames}, eggs, cheese, herbs`,
+                            instructions: "1. Dice ingredients\n2. Beat eggs\n3. Cook omelette with fillings\n4. Fold and serve",
+                            tip: "Use medium heat for fluffy eggs"
+                        }
+                    ];
+                    
+                    const randomRecipe = recipes[Math.floor(Math.random() * recipes.length)];
+                    
+                    recipeHTML = `
+                        <h3 class="text-xl font-bold text-cyan-400 mb-3">${randomRecipe.name}</h3>
+                        <div class="text-left space-y-3 text-sm">
+                            <p><strong class="text-amber-400">Ingredients:</strong> ${randomRecipe.ingredients}</p>
+                            <p><strong class="text-amber-400">Instructions:</strong><br>${randomRecipe.instructions.replace(/\n/g, '<br>')}</p>
+                            <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+                                <p><strong class="text-amber-300">Pro Tip:</strong> ${randomRecipe.tip}</p>
+                            </div>
+                        </div>
+                        <button id="close-recipe" class="mt-6 w-full py-3 bg-cyan-600 hover:bg-cyan-700 rounded-xl font-semibold transition btn-press">
+                            Got It, Thanks!
+                        </button>
+                    `;
+                } else {
+                    recipeHTML = `
+                        <h3 class="text-xl font-bold text-emerald-400 mb-3">No Urgent Items!</h3>
+                        <p class="text-slate-300 mb-4 text-sm">Your fridge is looking good! No items need immediate attention.</p>
+                        <button id="close-recipe" class="w-full py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold transition btn-press">
+                            Close
+                        </button>
+                    `;
+                }
+                
+                recipeContent.innerHTML = recipeHTML;
+                
+                document.getElementById('close-recipe').addEventListener('click', () => {
+                    recipeModal.classList.add('hidden');
+                });
+            }, 1500);
+        }
+        
+        // Mobile-specific optimizations
+        function handleTouchStart(e) {
+            // Add touch feedback
+            if (e.target.classList.contains('btn-press')) {
+                e.target.style.transform = 'scale(0.95)';
+            }
+        }
+        
+        function handleTouchEnd(e) {
+            if (e.target.classList.contains('btn-press')) {
+                e.target.style.transform = 'scale(1)';
+            }
+        }
+        
+        document.addEventListener('touchstart', handleTouchStart, { passive: true });
+        document.addEventListener('touchend', handleTouchEnd, { passive: true });
+        
+        // Initialize
+        setTimeout(() => {
+            document.querySelectorAll('.fade-in').forEach(el => {
+                el.style.opacity = '1';
+            });
+        }, 300);
+
+        // Prevent zoom on double-tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>
