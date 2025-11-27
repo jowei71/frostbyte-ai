@@ -3,381 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FrostByte AI • Smart Food Scanner</title>
+    <title>FrostByte AI • BOOMBO EDITION</title>
     <meta name="theme-color" content="#0f172a">
-    <meta name="description" content="AI-powered food scanner. Zero food waste. Real-time expiry tracking.">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #f8fafc;
-            min-height: 100vh;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+            color: #f8fafc; 
+            min-height: 100vh; 
             overflow-x: hidden;
-            touch-action: manipulation;
         }
-        .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .scanner-line {
-            position: absolute;
-            width: 100%;
-            height: 4px;
-            background: #22d3ee;
-            box-shadow: 0 0 20px #22d3ee;
-            animation: scan 3s infinite linear;
-        }
+        .glass { background: rgba(30,41,59,0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
+        .scanner-line { position: absolute; width: 100%; height: 5px; background: #f72585; box-shadow: 0 0 30px #f72585; animation: scan 2.5s infinite; }
         @keyframes scan { 0% { top: 0; opacity: 0; } 40% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        .btn-press { transition: all 0.2s ease; min-height: 44px; display: flex; align-items: center; justify-content: center; }
-        .btn-press:active { transform: scale(0.95); }
-        .fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .pulse-glow { animation: pulseGlow 2s infinite; }
-        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 5px rgba(34, 211, 238, 0.5); } 50% { box-shadow: 0 0 20px rgba(34, 211, 238, 0.8); } }
-        .loading-dots:after { content: ''; animation: dots 1.5s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } 80%, 100% { content: ''; } }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .shutter { animation: shutter 0.15s ease; }
-        @keyframes shutter { 0%, 100% { background: transparent; } 50% { background: white; } }
-        .camera-preview { width: 100%; height: 100%; object-fit: cover; border-radius: 20px; }
-        .capture-btn {
-            width: 70px; height: 70px; background: white; border: 4px solid #e2e8f0;
-            border-radius: 50%; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10;
-        }
-        .capture-btn:active { transform: translateX(-50%) scale(0.9); }
-        .banner {
-            background: linear-gradient(90deg, #06b6d4, #3b82f6);
-            color: white;
-            text-align: center;
-            padding: 8px 16px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            animation: slideDown 0.6s ease-out 0.5s forwards;
-            transform: translateY(-100%);
-        }
-        @keyframes slideDown { to { transform: translateY(0); } }
+        .btn-press:active { transform: scale(0.94); }
+        .pulse-glow { animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0%,100% { box-shadow: 0 0 15px #f72585; } 50% { box-shadow: 0 0 40px #f72585; } }
+        .shutter { animation: flash 0.2s; }
+        @keyframes flash { 50% { background: #fff; } }
+        .capture-btn { width: 80px; height: 80px; background: #fff; border: 6px solid #f72585; border-radius: 50%; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10; }
+        .boom { font-weight: 900; color: #f72585; text-shadow: 0 0 20px #f72585; }
+        .chakwana { font-style: italic; color: #ffd60a; }
     </style>
 </head>
-<body class="min-h-screen pb-8">
-    <!-- Coming Soon Banner -->
-    <div class="banner fixed top-0 left-0 right-0 z-50 shadow-2xl">
-        <i class="fa-solid fa-sparkles mr-2"></i>
-        Real AI launching soon • Enjoy the full experience demo!
+<body class="pb-20">
+    <div class="fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-600 text-center py-3 text-sm font-bold z-50">
+        <i class="fa-solid fa-pepper-hot"></i> BOOMBO EDITION • Powered by Ireen Chakwana Magic <i class="fa-solid fa-crown"></i>
     </div>
 
-    <nav class="glass fixed top-12 lg:top-0 w-full z-40 px-4 py-3 flex justify-between items-center border-b border-white/10">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center">
-                <i class="fa-solid fa-snowflake text-white text-sm"></i>
-            </div>
-            <h1 class="text-lg font-bold">FrostByte<span class="text-cyan-400">.ai</span></h1>
-        </div>
-        <div class="text-xs bg-emerald-500/20 border border-emerald-500/40 px-3 py-1.5 rounded-full text-emerald-400 flex items-center gap-2">
-            <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-glow"></div>
-            LIVE DEMO
-        </div>
-    </nav>
+    <main class="pt-20 px-4 max-w-4xl mx-auto text-center">
+        <h1 class="text-5xl font-black mt-10 mb-2">
+            Scan Your Food <span class="boom">BOOMBO!</span>
+        </h1>
+        <p class="text-cyan-300 text-lg mb-8">No food dies on Ireen's watch</p>
 
-    <main class="pt-24 px-4 max-w-4xl mx-auto">
-        <div class="stats-grid mb-6 grid grid-cols-2 gap-4">
-            <div class="glass rounded-2xl p-5 fade-in">
-                <div class="text-xs text-slate-400 mb-1">Fridge Health</div>
-                <div class="text-4xl font-bold text-emerald-400" id="health-score">--</div>
-                <div class="w-full bg-slate-700/50 h-2.5 mt-3 rounded-full overflow-hidden">
-                    <div id="health-bar" class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 w-0 transition-all duration-1000"></div>
-                </div>
-            </div>
-            <div class="glass rounded-2xl p-5 fade-in">
-                <div class="text-xs text-slate-400 mb-1">Money Saved</div>
-                <div class="text-4xl font-bold text-amber-400">$<span id="money-saved">0</span></div>
-                <p class="text-xs text-slate-500 mt-1">From rescued food</p>
-            </div>
-        </div>
-
-        <div class="glass rounded-3xl p-1 mb-6 border border-white/10 shadow-2xl fade-in">
-            <div class="bg-slate-900/80 rounded-[1.5rem] overflow-hidden relative min-h-[380px] flex flex-col items-center justify-center">
-                <div id="scanner-init" class="text-center p-8 w-full space-y-8">
-                    <div class="w-28 h-28 bg-slate-800/60 rounded-full mx-auto flex items-center justify-center border-4 border-dashed border-cyan-500/40 pulse-glow">
-                        <i class="fa-solid fa-camera text-5xl text-cyan-400"></i>
+        <div class="glass rounded-3xl p-2 mb-8 shadow-2xl">
+            <div class="bg-black/80 rounded-3xl overflow-hidden relative h-96 flex items-center justify-center">
+                <div id="init" class="space-y-8">
+                    <div class="w-32 h-32 mx-auto bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center pulse-glow">
+                        <i class="fa-solid fa-camera text-6xl text-white"></i>
                     </div>
-                    <div>
-                        <h3 class="text-2xl font-bold mb-2">Scan Your Fridge</h3>
-                        <p class="text-slate-400">AI-powered food tracking • Zero waste</p>
-                    </div>
-                    <div class="space-y-4 w-full max-w-xs mx-auto">
-                        <button id="camera-btn" class="w-full py-5 bg-gradient-to-r from-cyan-600 to-blue-700 rounded-xl text-white font-bold text-lg btn-press flex items-center justify-center gap-3 shadow-lg">
-                            <i class="fa-solid fa-camera"></i> Take Photo
-                        </button>
-                        <button id="demo-btn" class="w-full py-4 bg-slate-700 hover:bg-slate-600 rounded-xl text-white font-semibold btn-press">
-                            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Try Demo Scan
-                        </button>
-                    </div>
-                </div>
-
-                <div id="camera-view" class="hidden absolute inset-0 bg-black rounded-[1.5rem] overflow-hidden">
-                    <video id="video" autoplay playsinline class="camera-preview"></video>
-                    <div class="scanner-line"></div>
-                    <div class="absolute top-4 left-4 text-sm font-mono text-cyan-400 bg-black/60 px-4 py-2 rounded-full">
-                        <i class="fa-solid fa-circle text-xs mr-1"></i> LIVE
-                    </div>
-                    <button id="capture-btn" class="capture-btn"></button>
-                    <button id="close-camera" class="absolute top-4 right-4 text-white bg-black/60 w-12 h-12 rounded-full flex items-center justify-center text-2xl">
-                        ×
+                    <button id="scan-btn" class="w-72 py-6 bg-gradient-to-r from-pink-600 to-purple-700 rounded-2xl text-xl font-black btn-press shadow-2xl">
+                        <i class="fa-solid fa-bolt mr-3"></i> SCAN NOW BOOMBO!
+                    </button>
+                    <button id="demo-btn" class="w-72 py-5 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl font-bold btn-press">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Demo (Ireen Approved)
                     </button>
                 </div>
 
-                <div id="scanning-overlay" class="hidden absolute inset-0 bg-black">
-                    <canvas id="preview-canvas" class="w-full h-full object-cover opacity-50"></canvas>
+                <div id="camera" class="hidden absolute inset-0">
+                    <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
                     <div class="scanner-line"></div>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-6 p-6">
-                        <div class="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center">
-                            <i class="fa-solid fa-brain text-5xl text-cyan-400 animate-pulse"></i>
-                        </div>
-                        <div class="glass border border-cyan-500/30 px-6 py-4 rounded-3xl">
-                            <p class="text-xl font-bold text-cyan-400 text-center" id="scan-text">FrostByte AI Thinking<span class="loading-dots"></span></p>
-                        </div>
+                    <button id="capture" class="capture-btn"></button>
+                    <button onclick="location.reload()" class="absolute top-4 right-4 bg-black/60 w-12 h-12 rounded-full">×</button>
+                </div>
+
+                <div id="scanning" class="hidden absolute inset-0 bg-black">
+                    <canvas id="canvas" class="w-full h-full object-cover opacity-60"></canvas>
+                    <div class="scanner-line"></div>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-6">
+                        <img src="https://i.ibb.co/2qjb5Yc/ireen.png" alt="Ireen Chakwana" class="w-28 h-28 rounded-full border-4 border-pink-500 pulse-glow">
+                        <p class="text-2xl font-black text-pink-400">Ireen is checking your fridge...<span class="loading-dots"></span></p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
-        <div id="results-section" class="hidden space-y-6 fade-in">
-            <button id="rescue-btn" class="w-full p-2 rounded-3xl bg-gradient-to-r from-orange-600 to-rose-700 shadow-2xl">
-                <div class="glass rounded-2xl p-5 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-white/20 rounded-3xl flex items-center justify-center text-3xl">
-                            <i class="fa-solid fa-fire"></i>
-                        </div>
-                        <div class="text-left">
-                            <div class="text-sm font-bold text-orange-300 uppercase tracking-wider">Urgent Rescue</div>
-                            <div class="text-xl font-bold">Save Food Now</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-arrow-right text-2xl"></i>
-                </div>
-            </button>
-
-            <div class="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
-                <button class="filter-btn active px-5 py-3 rounded-xl bg-cyan-600 text-white font-bold" data-filter="all">All</button>
-                <button class="filter-btn px-5 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold" data-filter="urgent">Critical</button>
-                <button class="filter-btn px-5 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold" data-filter="fresh">Fresh</button>
+        <div id="results" class="hidden space-y-6">
+            <div class="glass rounded-3xl p-8 text-center">
+                <h2 class="text-4xl font-black mb-4">BOOMBO VERDICT</h2>
+                <div id="items" class="space-y-6 my-8"></div>
+                
+                <button id="rescue" class="w-full py-6 bg-gradient-to-r from-orange-600 to-red-700 rounded-3xl font-black text-2xl btn-press shadow-2xl">
+                    <i class="fa-solid fa-fire"></i> IRENE CHAKWANA RESCUE RECIPE <i class="fa-solid fa-fire"></i>
+                </button>
             </div>
-
-            <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
         </div>
     </main>
 
-    <!-- Recipe Modal -->
-    <div id="recipe-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/80 backdrop-blur-md">
-        <div class="w-full max-w-2xl bg-slate-900 rounded-t-3xl border-t border-white/10 max-h-[85vh] overflow-y-auto">
-            <div class="p-6 pb-8">
-                <div class="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-6"></div>
-                <div id="recipe-content" class="text-center space-y-6"></div>
-            </div>
+    <div id="modal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-6 z-50">
+        <div class="bg-gradient-to-br from-purple-900 to-pink-900 rounded-3xl p-8 max-w-lg text-center">
+            <h3 class="text-3xl font-black mb-6">IREEN CHAKWANA SPECIAL</h3>
+            <div id="recipe" class="text-lg space-y-4"></div>
+            <button onclick="document.getElementById('modal').classList.add('hidden')" class="mt-8 w-full py-5 bg-white text-black rounded-2xl font-black text-xl btn-press">
+                Thank You Mama Ireen!
+            </button>
         </div>
     </div>
 
-    <audio id="shutter-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-564.mp3" preload="auto"></audio>
+    <audio id="shutter" src="https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-564.mp3"></audio>
 
     <script>
-        // State
-        let inventory = JSON.parse(localStorage.getItem('frostbyte-inventory') || '[]');
-        let savedMoney = parseFloat(localStorage.getItem('frostbyte-saved') || '0');
-        let cameraStream = null;
-
-        // DOM
-        const scannerInit = document.getElementById('scanner-init');
-        const cameraView = document.getElementById('camera-view');
-        const scanningOverlay = document.getElementById('scanning-overlay');
-        const resultsSection = document.getElementById('results-section');
-        const video = document.getElementById('video');
-        const previewCanvas = document.getElementById('preview-canvas');
-        const itemsGrid = document.getElementById('items-grid');
-        const healthScore = document.getElementById('health-score');
-        const healthBar = document.getElementById('health-bar');
-        const moneySaved = document.getElementById('money-saved');
-        const scanText = document.getElementById('scan-text');
-        const recipeModal = document.getElementById('recipe-modal');
-        const recipeContent = document.getElementById('recipe-content');
-        const shutterSound = document.getElementById('shutter-sound');
-
-        // Demo datasets (cycle through for variety)
-        const demoScans = [
+        const demos = [
             [
-                { name: "Whole Milk", daysLeft: 2, emoji: "🥛", tip: "Smell test it" },
-                { name: "Avocado", daysLeft: 1, emoji: "🥑", tip: "Perfect for guac" },
-                { name: "Chicken Breast", daysLeft: 1, emoji: "🍗", tip: "Cook tonight!" },
-                { name: "Spinach", daysLeft: 3, emoji: "🥬", tip: "Blend into smoothie" },
-                { name: "Greek Yogurt", daysLeft: 12, emoji: "🍶", tip: "Still fresh" },
-                { name: "Cheddar", daysLeft: 28, emoji: "🧀", tip: "Ages like wine" }
+                {name: "Nshima leftovers", days: 1, emoji: "🍲", tip: "Reheat with soup"},
+                {name: "Kapenta", days: 3, emoji: "🐟", tip: "Fry with tomato"},
+                {name: "Cabbage", days: 2, emoji: "🥬", tip: "Make chakwana salad"},
+                {name: "Tomatoes", days: 1, emoji: "🍅", tip: "Urgent!"},
+                {name: "Ifisashi", days: 2, emoji: "🥗", tip: "Eat with nshima"}
             ],
             [
-                { name: "Leftover Pizza", daysLeft: 1, emoji: "🍕", tip: "Reheat 5 mins" },
-                { name: "Bananas", daysLeft: 2, emoji: "🍌", tip: "Freeze for smoothies" },
-                { name: "Tomatoes", daysLeft: 4, emoji: "🍅", tip: "Make sauce" },
-                { name: "Eggs", daysLeft: 18, emoji: "🥚", tip: "Hard boil extras" }
+                {name: "Village chicken", days: 1, emoji: "🍗", tip: "Cook NOW!"},
+                {name: "Dried fish", days: 30, emoji: "🐠", tip: "Still strong"},
+                {name: "Chibwabwa", days: 2, emoji: "🌿", tip: "Pumpkin leaves power"},
+                {name: "Sour milk", days: 1, emoji: "🥛", tip: "Make chikanda?"}
             ]
         ];
-        let currentDemoIndex = 0;
 
-        // Init
-        document.getElementById('camera-btn').addEventListener('click', openCamera);
-        document.getElementById('demo-btn').addEventListener('click', runDemoScan);
-        document.getElementById('capture-btn').addEventListener('click', captureImage);
-        document.getElementById('close-camera').addEventListener('click', () => location.reload());
-        document.getElementById('rescue-btn')?.addEventListener('click', showRescueRecipe);
+        let current = 0;
 
-        if (inventory.length > 0) {
-            renderResults();
-        }
+        document.getElementById('scan-btn').onclick = () => {
+            document.getElementById('init').classList.add('hidden');
+            document.getElementById('camera').classList.remove('hidden');
+            navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+                .then(s=>{video.srcObject=s})
+                .catch(()=>runDemo());
+        };
 
-        function openCamera() {
-            scannerInit.classList.add('hidden');
-            cameraView.classList.remove('hidden');
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                .then(stream => {
-                    cameraStream = stream;
-                    video.srcObject = stream;
-                })
-                .catch(() => {
-                    alert("Camera access denied — trying demo mode!");
-                    runDemoScan();
-                });
-        }
-
-        function captureImage() {
-            if (!cameraStream) return;
-            shutterSound.play();
+        document.getElementById('demo-btn').onclick = runDemo;
+        document.getElementById('capture').onclick = () => {
+            document.getElementById('shutter').play();
             document.body.classList.add('shutter');
-            setTimeout(() => document.body.classList.remove('shutter'), 150);
-            if ('vibrate' in navigator) navigator.vibrate(50);
+            setTimeout(()=>document.body.classList.remove('shutter'),200);
+            runDemo();
+        };
 
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            previewCanvas.getContext('2d').drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
-
-            closeCamera();
-            runDemoScan(); // Real AI placeholder
-        }
-
-        function closeCamera() {
-            if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-            cameraView.classList.add('hidden');
-        }
-
-        function runDemoScan() {
-            scanningOverlay.classList.remove('hidden');
-            startScanningAnimation();
-
+        function runDemo() {
+            document.getElementById('camera').classList.add('hidden');
+            document.getElementById('scanning').classList.remove('hidden');
             setTimeout(() => {
-                inventory = demoScans[currentDemoIndex];
-                currentDemoIndex = (currentDemoIndex + 1) % demoScans.length;
-                renderResults();
-                scanningOverlay.classList.add('hidden');
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }, 3200);
+                const items = demos[current];
+                current = (current + 1) % demos.length;
+                showResults(items);
+            }, 3500);
         }
 
-        function renderResults() {
-            resultsSection.classList.remove('hidden');
-            let total = 0;
-            itemsGrid.innerHTML = '';
-
-            inventory.forEach((item, i) => {
-                const days = item.daysLeft;
-                const urgency = days <= 2 ? 'bg-red-500/20 border-red-500/40 text-red-400' :
-                               days <= 5 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' :
-                               'bg-emerald-500/20 border-emerald-500/40 text-emerald-400';
-
-                total += days <= 2 ? 20 : days <= 5 ? 60 : 100;
-
-                const card = document.createElement('div');
-                card.className = `glass rounded-2xl p-5 border ${urgency} fade-in`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="text-5xl">${item.emoji}</span>
-                        <span class="text-sm font-bold px-3 py-1.5 rounded-full bg-current text-white">${days} DAYS</span>
-                    </div>
-                    <h3 class="font-bold text-lg mb-1">${item.name}</h3>
-                    <p class="text-sm text-slate-400 mb-6">${item.tip}</p>
-                    <button class="eat-btn w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold btn-press" data-index="${i}">
-                        Mark As Eaten
-                    </button>
+        function showResults(items) {
+            document.getElementById('scanning').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            const grid = document.getElementById('items');
+            grid.innerHTML = '';
+            items.forEach(i => {
+                const div = document.createElement('div');
+                div.className = 'glass rounded-2xl p-6 text-2xl';
+                div.innerHTML = `
+                    <div class="text-6xl mb-4">${i.emoji}</div>
+                    <div class="font-bold">${i.name}</div>
+                    <div class="text-4xl my-3 ${i.days<=2?'text-red-400':'text-yellow-400'}">${i.days} DAYS</div>
+                    <div class="text-sm opacity-80">${i.tip}</div>
                 `;
-                itemsGrid.appendChild(card);
+                grid.appendChild(div);
             });
-
-            const score = Math.round(total / inventory.length);
-            healthScore.textContent = score;
-            healthBar.style.width = score + '%';
-            moneySaved.textContent = savedMoney.toFixed(1);
-
-            document.querySelectorAll('.eat-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const idx = btn.dataset.index;
-                    savedMoney += 3.5;
-                    localStorage.setItem('frostbyte-saved', savedMoney);
-                    moneySaved.textContent = savedMoney.toFixed(1);
-                    inventory.splice(idx, 1);
-                    localStorage.setItem('frostbyte-inventory', JSON.stringify(inventory));
-                    renderResults();
-                    confetti({ particleCount: 40, spread: 60 });
-                    if ('vibrate' in navigator) navigator.vibrate([50, 50, 50]);
-                });
-            });
-
-            resultsSection.scrollIntoView({ behavior: 'smooth' });
+            confetti({particleCount:150, spread:100, origin:{y:0.6}});
         }
 
-        function startScanningAnimation() {
-            const msgs = ["Analyzing food items...", "Checking freshness...", "Calculating expiry dates...", "FrostByte AI thinking..."];
-            let i = 0;
-            const interval = setInterval(() => {
-                scanText.innerHTML = msgs[i % msgs.length] + '<span class="loading-dots"></span>';
-                i++;
-            }, 800);
-            setTimeout(() => clearInterval(interval), 5000);
-        }
-
-        function showRescueRecipe() {
-            const urgent = inventory.filter(i => i.daysLeft <= 3);
-            if (urgent.length === 0) {
-                recipeContent.innerHTML = `<h3 class="text-2xl font-bold text-emerald-400">Your fridge is perfect!</h3><p>No rescue needed.</p>`;
-            } else {
-                const names = urgent.map(i => i.name).join(', ');
-                recipeContent.innerHTML = `
-                    <h3 class="text-2xl font-bold text-orange-400 mb-4">Quick Rescue Stir-Fry</h3>
-                    <p class="text-left text-sm leading-relaxed">Use your ${names.toLowerCase()} tonight!</p>
-                    <div class="bg-white/5 rounded-2xl p-5 text-left text-sm space-y-3 mt-6">
-                        <p><strong>Ingredients:</strong> ${names}, oil, garlic, soy sauce, rice</p>
-                        <p><strong>Steps:</strong><br>1. Chop everything<br>2. Stir-fry 8 mins<br>3. Add soy sauce<br>4. Serve hot</p>
-                    </div>
-                    <button onclick="recipeModal.classList.add('hidden')" class="mt-8 w-full py-4 bg-cyan-600 hover:bg-cyan-700 rounded-xl font-bold btn-press">
-                        Got it, Chef!
-                    </button>
-                `;
-            }
-            recipeModal.classList.remove('hidden');
-        }
-
-        // Fade in everything
-        setTimeout(() => document.querySelectorAll('.fade-in').forEach((el, i) => {
-            el.style.animationDelay = `${i * 0.1}s`;
-            el.style.opacity = '1';
-        }), 300);
+        document.getElementById('rescue').onclick = () => {
+            const recipe = `
+                <h4 class="text-2xl font-black text-yellow-400">CHAKWANA RESCUE RELISH</h4>
+                <p>Throw everything in the pot with onion, tomato, salt & cooking oil!</p>
+                <p class="my-6 text-3xl">BOOMBO! 🔥</p>
+                <p>Mama Ireen says: "No food dies in my house!" 👑</p>
+            `;
+            document.getElementById('recipe').innerHTML = recipe;
+            document.getElementById('modal').classList.remove('hidden');
+            confetti({particleCount:200, spread:120});
+        };
     </script>
 </body>
 </html>
