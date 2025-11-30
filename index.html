@@ -1,177 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FrostByte AI • BOOMBO EDITION</title>
-    <meta name="theme-color" content="#0f172a">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
-            color: #f8fafc; 
-            min-height: 100vh; 
-            overflow-x: hidden;
-        }
-        .glass { background: rgba(30,41,59,0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
-        .scanner-line { position: absolute; width: 100%; height: 5px; background: #f72585; box-shadow: 0 0 30px #f72585; animation: scan 2.5s infinite; }
-        @keyframes scan { 0% { top: 0; opacity: 0; } 40% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        .btn-press:active { transform: scale(0.94); }
-        .pulse-glow { animation: pulse 1.8s infinite; }
-        @keyframes pulse { 0%,100% { box-shadow: 0 0 15px #f72585; } 50% { box-shadow: 0 0 40px #f72585; } }
-        .shutter { animation: flash 0.2s; }
-        @keyframes flash { 50% { background: #fff; } }
-        .capture-btn { width: 80px; height: 80px; background: #fff; border: 6px solid #f72585; border-radius: 50%; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10; }
-        .boom { font-weight: 900; color: #f72585; text-shadow: 0 0 20px #f72585; }
-        .chakwana { font-style: italic; color: #ffd60a; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Content ROI Doctor</title>
+
+  <!-- ✅ FAVICON -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🩺</text></svg>">
+
+  <!-- ✅ OPEN GRAPH META -->
+  <meta property="og:title" content="Content ROI Doctor">
+  <meta property="og:description" content="Paste any blog URL and instantly see why it’s not ranking — with a concrete fix.">
+  <meta property="og:type" content="website">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: radial-gradient(circle at top, #0b1020, #020617);
+      color: white;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: auto;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, #020617, #020617cc);
+      border-radius: 20px;
+      border: 1px solid #1e293b;
+      padding: 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 28px;
+    }
+
+    .badge {
+      background: linear-gradient(90deg, #fde68a, #facc15);
+      color: black;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: black;
+      color: white;
+      margin-top: 6px;
+    }
+
+    input.invalid {
+      border: 1px solid #ef4444;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      border: none;
+      color: white;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid white;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .score-ring {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 6px solid #22c55e;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .muted {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+  </style>
 </head>
-<body class="pb-20">
-    <div class="fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-600 text-center py-3 text-sm font-bold z-50">
-        <i class="fa-solid fa-pepper-hot"></i> BOOMBO EDITION • Powered by Ireen Chakwana Magic <i class="fa-solid fa-crown"></i>
+
+<body>
+  <div class="wrap">
+    <h1>🩺 Content ROI Doctor <span class="badge">Built for SaaS founders - V1</span></h1>
+    <p class="muted">Paste a blog URL and see why it’s not ranking — with a concrete fix.</p>
+
+    <div class="grid">
+      <!-- ✅ LEFT PANEL -->
+      <div class="card">
+        <label>Article URL</label>
+        <input id="url" placeholder="https://example.com/post">
+
+        <label>Target Keyword</label>
+        <input id="keyword" placeholder="saas content marketing">
+
+        <label>Audience (optional)</label>
+        <input id="audience" placeholder="SaaS founders, CMOs">
+
+        <label>Optional Notes</label>
+        <textarea id="notes" rows="4" placeholder="Goal, funnel stage, etc."></textarea>
+
+        <button id="runBtn">
+          <span id="btnText">🚀 Run Content Audit</span>
+        </button>
+
+        <div id="status" class="muted"></div>
+      </div>
+
+      <!-- ✅ RIGHT PANEL -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div id="scoreRing" class="score-ring">–</div>
+          <div>
+            <div class="muted">OVERALL SCORE</div>
+            <div id="scoreSummary" class="muted">Run an audit to see what’s blocking your rankings.</div>
+          </div>
+        </div>
+
+        <h3>Top Issues</h3>
+        <ul id="issues"></ul>
+      </div>
     </div>
+  </div>
 
-    <main class="pt-20 px-4 max-w-4xl mx-auto text-center">
-        <h1 class="text-5xl font-black mt-10 mb-2">
-            Scan Your Food <span class="boom">BOOMBO!</span>
-        </h1>
-        <p class="text-cyan-300 text-lg mb-8">No food dies on Ireen's watch</p>
+<script>
+const btn = document.getElementById("runBtn");
+const urlInput = document.getElementById("url");
+const scoreRing = document.getElementById("scoreRing");
+const scoreSummary = document.getElementById("scoreSummary");
+const issuesList = document.getElementById("issues");
+const status = document.getElementById("status");
 
-        <div class="glass rounded-3xl p-2 mb-8 shadow-2xl">
-            <div class="bg-black/80 rounded-3xl overflow-hidden relative h-96 flex items-center justify-center">
-                <div id="init" class="space-y-8">
-                    <div class="w-32 h-32 mx-auto bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center pulse-glow">
-                        <i class="fa-solid fa-camera text-6xl text-white"></i>
-                    </div>
-                    <button id="scan-btn" class="w-72 py-6 bg-gradient-to-r from-pink-600 to-purple-700 rounded-2xl text-xl font-black btn-press shadow-2xl">
-                        <i class="fa-solid fa-bolt mr-3"></i> SCAN NOW BOOMBO!
-                    </button>
-                    <button id="demo-btn" class="w-72 py-5 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl font-bold btn-press">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Demo (Ireen Approved)
-                    </button>
-                </div>
+function scoreColor(score) {
+  if (score < 50) return "#ef4444";
+  if (score < 75) return "#f59e0b";
+  return "#22c55e";
+}
 
-                <div id="camera" class="hidden absolute inset-0">
-                    <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
-                    <div class="scanner-line"></div>
-                    <button id="capture" class="capture-btn"></button>
-                    <button onclick="location.reload()" class="absolute top-4 right-4 bg-black/60 w-12 h-12 rounded-full">×</button>
-                </div>
+btn.onclick = async () => {
+  const url = urlInput.value.trim();
 
-                <div id="scanning" class="hidden absolute inset-0 bg-black">
-                    <canvas id="canvas" class="w-full h-full object-cover opacity-60"></canvas>
-                    <div class="scanner-line"></div>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-6">
-                        <img src="https://i.ibb.co/2qjb5Yc/ireen.png" alt="Ireen Chakwana" class="w-28 h-28 rounded-full border-4 border-pink-500 pulse-glow">
-                        <p class="text-2xl font-black text-pink-400">Ireen is checking your fridge...<span class="loading-dots"></span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+  if (!url.startsWith("http")) {
+    urlInput.classList.add("invalid");
+    return;
+  } else {
+    urlInput.classList.remove("invalid");
+  }
 
-        <div id="results" class="hidden space-y-6">
-            <div class="glass rounded-3xl p-8 text-center">
-                <h2 class="text-4xl font-black mb-4">BOOMBO VERDICT</h2>
-                <div id="items" class="space-y-6 my-8"></div>
-                
-                <button id="rescue" class="w-full py-6 bg-gradient-to-r from-orange-600 to-red-700 rounded-3xl font-black text-2xl btn-press shadow-2xl">
-                    <i class="fa-solid fa-fire"></i> IRENE CHAKWANA RESCUE RECIPE <i class="fa-solid fa-fire"></i>
-                </button>
-            </div>
-        </div>
-    </main>
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> Running audit...`;
 
-    <div id="modal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-6 z-50">
-        <div class="bg-gradient-to-br from-purple-900 to-pink-900 rounded-3xl p-8 max-w-lg text-center">
-            <h3 class="text-3xl font-black mb-6">IREEN CHAKWANA SPECIAL</h3>
-            <div id="recipe" class="text-lg space-y-4"></div>
-            <button onclick="document.getElementById('modal').classList.add('hidden')" class="mt-8 w-full py-5 bg-white text-black rounded-2xl font-black text-xl btn-press">
-                Thank You Mama Ireen!
-            </button>
-        </div>
-    </div>
+  const res = await fetch("http://127.0.0.1:8000/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url,
+      target_keyword: document.getElementById("keyword").value,
+      audience: document.getElementById("audience").value
+    })
+  });
 
-    <audio id="shutter" src="https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-564.mp3"></audio>
+  const data = await res.json();
 
-    <script>
-        const demos = [
-            [
-                {name: "Nshima leftovers", days: 1, emoji: "🍲", tip: "Reheat with soup"},
-                {name: "Kapenta", days: 3, emoji: "🐟", tip: "Fry with tomato"},
-                {name: "Cabbage", days: 2, emoji: "🥬", tip: "Make chakwana salad"},
-                {name: "Tomatoes", days: 1, emoji: "🍅", tip: "Urgent!"},
-                {name: "Ifisashi", days: 2, emoji: "🥗", tip: "Eat with nshima"}
-            ],
-            [
-                {name: "Village chicken", days: 1, emoji: "🍗", tip: "Cook NOW!"},
-                {name: "Dried fish", days: 30, emoji: "🐠", tip: "Still strong"},
-                {name: "Chibwabwa", days: 2, emoji: "🌿", tip: "Pumpkin leaves power"},
-                {name: "Sour milk", days: 1, emoji: "🥛", tip: "Make chikanda?"}
-            ]
-        ];
+  btn.disabled = false;
+  btn.innerHTML = "🚀 Run Content Audit";
 
-        let current = 0;
+  const score = data.score;
+  scoreRing.textContent = score;
+  scoreRing.style.borderColor = scoreColor(score);
+  scoreSummary.textContent = data.summary;
 
-        document.getElementById('scan-btn').onclick = () => {
-            document.getElementById('init').classList.add('hidden');
-            document.getElementById('camera').classList.remove('hidden');
-            navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
-                .then(s=>{video.srcObject=s})
-                .catch(()=>runDemo());
-        };
+  issuesList.innerHTML = "";
+  data.top_issues.forEach(i => {
+    const li = document.createElement("li");
+    li.textContent = i;
+    issuesList.appendChild(li);
+  });
+};
 
-        document.getElementById('demo-btn').onclick = runDemo;
-        document.getElementById('capture').onclick = () => {
-            document.getElementById('shutter').play();
-            document.body.classList.add('shutter');
-            setTimeout(()=>document.body.classList.remove('shutter'),200);
-            runDemo();
-        };
-
-        function runDemo() {
-            document.getElementById('camera').classList.add('hidden');
-            document.getElementById('scanning').classList.remove('hidden');
-            setTimeout(() => {
-                const items = demos[current];
-                current = (current + 1) % demos.length;
-                showResults(items);
-            }, 3500);
-        }
-
-        function showResults(items) {
-            document.getElementById('scanning').classList.add('hidden');
-            document.getElementById('results').classList.remove('hidden');
-            const grid = document.getElementById('items');
-            grid.innerHTML = '';
-            items.forEach(i => {
-                const div = document.createElement('div');
-                div.className = 'glass rounded-2xl p-6 text-2xl';
-                div.innerHTML = `
-                    <div class="text-6xl mb-4">${i.emoji}</div>
-                    <div class="font-bold">${i.name}</div>
-                    <div class="text-4xl my-3 ${i.days<=2?'text-red-400':'text-yellow-400'}">${i.days} DAYS</div>
-                    <div class="text-sm opacity-80">${i.tip}</div>
-                `;
-                grid.appendChild(div);
-            });
-            confetti({particleCount:150, spread:100, origin:{y:0.6}});
-        }
-
-        document.getElementById('rescue').onclick = () => {
-            const recipe = `
-                <h4 class="text-2xl font-black text-yellow-400">CHAKWANA RESCUE RELISH</h4>
-                <p>Throw everything in the pot with onion, tomato, salt & cooking oil!</p>
-                <p class="my-6 text-3xl">BOOMBO! 🔥</p>
-                <p>Mama Ireen says: "No food dies in my house!" 👑</p>
-            `;
-            document.getElementById('recipe').innerHTML = recipe;
-            document.getElementById('modal').classList.remove('hidden');
-            confetti({particleCount:200, spread:120});
-        };
-    </script>
+document.getElementById("notes").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    btn.click();
+  }
+});
+</script>
 </body>
 </html>
